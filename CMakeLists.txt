@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 3.12)
 # Include build functions from Pico SDK
 include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 
+# Include the RF24 library
+include(lib/RF24/CMakeLists.txt)
+
 # Set name of project (as PROJECT_NAME) and C/C++ standards
 project(blink C CXX ASM)
 set(CMAKE_C_STANDARD 11)
@@ -23,6 +26,9 @@ pico_add_extra_outputs(${PROJECT_NAME})
 # Link to pico_stdlib (gpio, time, etc. functions)
 target_link_libraries(${PROJECT_NAME}
     pico_stdlib
+    hardware_spi
+    hardware_timer
+    RF24
 )
 
 # Enable usb output, disable uart output
