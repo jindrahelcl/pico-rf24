@@ -11,7 +11,7 @@ bool role = false; // whether sending or receiving. false is receiving
 float payload = 3.0;
 
 const int BUTTON_PIN = 15;
-const int LED_PIN = PICO_DEFAULT_LED_PIN;
+const int LED_PIN = 16;
 
 int main() {
     // Initialize chosen serial port
@@ -87,7 +87,7 @@ int main() {
                 printf("Transmission failed or timed out.\n");
             }
 
-            sleep_ms(500);
+            //sleep_ms(500);
 
         }
         else {
