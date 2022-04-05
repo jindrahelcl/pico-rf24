@@ -6,7 +6,7 @@ RF24 radio(17, 14); // CE and CSN pins (respectively)
 uint8_t pipes[][6] = {"1Node", "2Node"};
 
 bool radioNumber = 1;  // 0 uses pipes[0] to transmit, 1 uses pipes[1] to transmit
-bool role = false; // whether sending or receiving. false is receiving
+bool transmitting = false; // whether sending or receiving. false is receiving
 
 float payload = 3.0;
 
@@ -73,10 +73,8 @@ int main() {
     // Loop forever
     while (true) {
 
-        if (role) {
+        if (transmitting) {
             // transmitting...
-            radio.stopListening();
-
             unsigned long start_timer = time_us_32();                    // start the timer
             bool report = radio.write(&payload, sizeof(float));      // transmit & save the report
             unsigned long end_timer = time_us_32();                      // end the timer
@@ -93,8 +91,6 @@ int main() {
         }
         else {
             // receiving...
-            radio.startListening();
-
             uint8_t pipe;
             if (radio.available(&pipe)) {
                 uint8_t bytes = radio.getPayloadSize();
@@ -110,11 +106,18 @@ int main() {
 
         // change role?
         if(gpio_get(BUTTON_PIN)) {
-            printf("button is pressed, setting role to transmit\n");
-            role = 1;
+            if (!transmitting) {
+                printf("button is pressed, setting role to transmit\n");
+                radio.stopListening();
+            }
+            transmitting = 1;
         }
         else {
-            role = 0;
+            if (transmitting) {
+                printf("button released, listening again.\n");
+                radio.startListening();
+            }
+            transmitting = 0;
         }
 
     }
