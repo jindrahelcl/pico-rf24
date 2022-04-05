@@ -3,7 +3,7 @@
 #include "pico/stdlib.h"
 
 RF24 radio(7, 8); // CE and CSN pins (respectively)
-uint8_t pipes[][6] = {"Node1", "Node2"};
+uint8_t pipes[][6] = {"1Node", "2Node"};
 
 bool radioNumber = 1;  // 0 uses pipes[0] to transmit, 1 uses pipes[1] to transmit
 bool role = false; // whether sending or receiving. false is receiving
@@ -22,36 +22,22 @@ int main() {
         sleep_ms(100);
     }
 
-    printf("hello, no konečně vole\n");
-
-    printf("initializing button pin\n");
     // initialize button and LED pins
     gpio_init(BUTTON_PIN);
     gpio_set_dir(BUTTON_PIN, GPIO_IN);
     gpio_pull_down(BUTTON_PIN); // ensure it is not floating when button not pressed
 
-    printf("initializing led pin\n");
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
 
-    printf("initializing radio\n");
     if (!radio.begin()) {
         gpio_put(LED_PIN, 1);
         printf("Radio hardware is not responding!\n");
     }
 
-    printf("radio initailized\n");
-    gpio_put(LED_PIN, 1);
-    delay(400);
-    gpio_put(LED_PIN, 0);
-    delay(100);
-    gpio_put(LED_PIN, 1);
-    delay(400);
-    gpio_put(LED_PIN, 0);
-
     printf("Hello, this is vysilacka software.\n");
     printf("Which radio is this? Enter 0 or 1. Default 0\n");
-    char c = getchar();
+    int c = getchar_timeout_us(10000000);
     printf("You said: %c", c);
     switch(c) {
         case '0':
@@ -60,8 +46,12 @@ int main() {
         case '1':
             radioNumber = 1;
             break;
+        case PICO_ERROR_TIMEOUT:
+            printf("zmrde, vytimeoutoval jsi\n");
+            radioNumber = 0;
+            break;
         default:
-            printf("You did not say 0 or 1. Bye.");
+            printf("You did not say 0 or 1. Bye.\n");
             return 1;
     }
 
@@ -89,10 +79,10 @@ int main() {
             unsigned long end_timer = time_us_32();                      // end the timer
 
             if (report) {
-                printf("Transmission successful, time to transmit: %d us", end_timer - start_timer);
+                printf("Transmission successful, time to transmit: %d us\n", end_timer - start_timer);
             }
             else {
-                printf("Transmission failed or timed out.");
+                printf("Transmission failed or timed out.\n");
             }
 
             delay(500);
@@ -104,13 +94,13 @@ int main() {
             if (radio.available(&pipe)) {
                 uint8_t bytes = radio.getPayloadSize();
                 radio.read(&payload, bytes);
-                printf("received %d bytes on pipe %d: %f", bytes, pipe, payload);
+                printf("received %d bytes on pipe %d: %f\n", bytes, pipe, payload);
             }
         }
 
         // change role?
         if(gpio_get(BUTTON_PIN)) {
-            printf("button is pressed, setting role to transmit");
+            printf("button is pressed, setting role to transmit\n");
             role = 1;
         }
         else {
