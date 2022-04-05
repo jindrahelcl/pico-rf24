@@ -51,22 +51,23 @@ int main() {
             radioNumber = 0;
             break;
         default:
-            printf("You did not say 0 or 1. Bye.\n");
-            return 1;
+            printf("You did not say 0 or 1. Settting to default 0.\n");
+            radioNumber = 0;
+            break;
     }
 
+    printf("setting up radio and opening pipes.\n");
     radio.setPALevel(RF24_PA_MAX);
     radio.setPayloadSize(sizeof(payload));
 
     radio.openReadingPipe(1, pipes[!radioNumber]);
     radio.openWritingPipe(pipes[radioNumber]);
 
-    if(role) {
-        radio.stopListening();
-    }
-    else {
-        radio.startListening();
-    }
+    printf("starting listening\n");
+    radio.startListening();
+
+    printf("entering while loop in 2 seconds\n");
+    sleep_ms(2000);
 
     // Loop forever
     while (true) {
@@ -86,6 +87,7 @@ int main() {
             }
 
             sleep_ms(500);
+
         }
         else {
             // receiving...
@@ -101,9 +103,16 @@ int main() {
         // change role?
         if(gpio_get(BUTTON_PIN)) {
             printf("button is pressed, setting role to transmit\n");
+
+            if (!role) {
+                radio.stopListening();
+            }
             role = 1;
         }
         else {
+            if (role) {
+                radio.startListening();
+            }
             role = 0;
         }
 
