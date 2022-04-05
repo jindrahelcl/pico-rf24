@@ -43,6 +43,13 @@ target_link_libraries(test
     pico_stdio_usb
 )
 
+target_compile_definitions(${PROJECT_NAME}
+    PUBLIC PICO_DEFAULT_SPI=0
+    PUBLIC PICO_DEFAULT_SPI_SCK_PIN=6
+    PUBLIC PICO_DEFAULT_SPI_TX_PIN=7
+    PUBLIC PICO_DEFAULT_SPI_RX_PIN=4
+)
+
 # Enable usb output, disable uart output
 pico_enable_stdio_usb(${PROJECT_NAME} 1)
 pico_enable_stdio_uart(${PROJECT_NAME} 0)
