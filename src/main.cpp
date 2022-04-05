@@ -11,7 +11,7 @@ bool role = false; // whether sending or receiving. false is receiving
 float payload = 3.0;
 
 const int BUTTON_PIN = 15;
-const int LED_PIN = 16;
+const int LED_PIN = PICO_DEFAULT_LED_PIN;
 
 int main() {
     // Initialize chosen serial port
@@ -31,7 +31,6 @@ int main() {
     gpio_set_dir(LED_PIN, GPIO_OUT);
 
     if (!radio.begin()) {
-        gpio_put(LED_PIN, 1);
         printf("Radio hardware is not responding!\n");
         return 1;
     }
@@ -100,6 +99,11 @@ int main() {
                 uint8_t bytes = radio.getPayloadSize();
                 radio.read(&payload, bytes);
                 printf("received %d bytes on pipe %d: %f\n", bytes, pipe, payload);
+
+                gpio_put(LED_PIN, 1);
+            }
+            else {
+                gpio_put(LED_PIN, 0);
             }
         }
 
