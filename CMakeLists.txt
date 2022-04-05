@@ -20,8 +20,14 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
 )
 
+add_executable(test
+    src/test_usb.cpp
+)
+
 # Create map/bin/hex/uf2 files
 pico_add_extra_outputs(${PROJECT_NAME})
+
+pico_add_extra_outputs(test)
 
 # Link to pico_stdlib (gpio, time, etc. functions)
 target_link_libraries(${PROJECT_NAME}
@@ -29,6 +35,12 @@ target_link_libraries(${PROJECT_NAME}
     hardware_spi
     hardware_timer
     RF24
+)
+
+target_link_libraries(test
+    pico_stdlib
+    hardware_timer
+    pico_stdio_usb
 )
 
 # Enable usb output, disable uart output
