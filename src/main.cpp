@@ -38,7 +38,7 @@ int main() {
     printf("Hello, this is vysilacka software.\n");
     printf("Which radio is this? Enter 0 or 1. Default 0\n");
     int c = getchar_timeout_us(10000000);
-    printf("You said: %c", c);
+    printf("You said: %c\n", c);
     switch(c) {
         case '0':
             radioNumber = 0;
