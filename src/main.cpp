@@ -59,6 +59,7 @@ int main() {
     printf("setting up radio and opening pipes.\n");
     radio.setPALevel(RF24_PA_MAX);
     radio.setPayloadSize(sizeof(payload));
+    radio.setAutoAck(false);
 
     radio.openReadingPipe(1, pipes[!radioNumber]);
     radio.openWritingPipe(pipes[radioNumber]);
