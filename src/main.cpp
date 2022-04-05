@@ -2,7 +2,7 @@
 #include <RF24.h>
 #include "pico/stdlib.h"
 
-RF24 radio(7, 8); // CE and CSN pins (respectively)
+RF24 radio(17, 14); // CE and CSN pins (respectively)
 uint8_t pipes[][6] = {"1Node", "2Node"};
 
 bool radioNumber = 1;  // 0 uses pipes[0] to transmit, 1 uses pipes[1] to transmit
@@ -33,6 +33,7 @@ int main() {
     if (!radio.begin()) {
         gpio_put(LED_PIN, 1);
         printf("Radio hardware is not responding!\n");
+        return 1;
     }
 
     printf("Hello, this is vysilacka software.\n");
@@ -72,9 +73,10 @@ int main() {
     // Loop forever
     while (true) {
 
-
         if (role) {
             // transmitting...
+            radio.stopListening();
+
             unsigned long start_timer = time_us_32();                    // start the timer
             bool report = radio.write(&payload, sizeof(float));      // transmit & save the report
             unsigned long end_timer = time_us_32();                      // end the timer
@@ -91,6 +93,7 @@ int main() {
         }
         else {
             // receiving...
+            radio.startListening();
 
             uint8_t pipe;
             if (radio.available(&pipe)) {
@@ -103,16 +106,9 @@ int main() {
         // change role?
         if(gpio_get(BUTTON_PIN)) {
             printf("button is pressed, setting role to transmit\n");
-
-            if (!role) {
-                radio.stopListening();
-            }
             role = 1;
         }
         else {
-            if (role) {
-                radio.startListening();
-            }
             role = 0;
         }
 
