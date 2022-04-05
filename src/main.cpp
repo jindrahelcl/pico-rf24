@@ -85,7 +85,7 @@ int main() {
                 printf("Transmission failed or timed out.\n");
             }
 
-            delay(500);
+            sleep_ms(500);
         }
         else {
             // receiving...
