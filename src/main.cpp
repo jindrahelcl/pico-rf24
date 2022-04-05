@@ -17,25 +17,30 @@ int main() {
     // Initialize chosen serial port
     stdio_init_all();
 
+    // wait for us to connect to the serial interface
+    while (!stdio_usb_connected()) {
+        sleep_ms(100);
+    }
+
+    printf("hello, no konečně vole\n");
+
+    printf("initializing button pin\n");
     // initialize button and LED pins
     gpio_init(BUTTON_PIN);
     gpio_set_dir(BUTTON_PIN, GPIO_IN);
     gpio_pull_down(BUTTON_PIN); // ensure it is not floating when button not pressed
 
+    printf("initializing led pin\n");
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
 
-    gpio_put(LED_PIN, 1);
-    delay(500);
-    gpio_put(LED_PIN, 0);
-    delay(100);
-
+    printf("initializing radio\n");
     if (!radio.begin()) {
         gpio_put(LED_PIN, 1);
         printf("Radio hardware is not responding!\n");
-        while (true) {}
     }
 
+    printf("radio initailized\n");
     gpio_put(LED_PIN, 1);
     delay(400);
     gpio_put(LED_PIN, 0);
