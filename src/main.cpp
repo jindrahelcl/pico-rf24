@@ -91,25 +91,48 @@ int main() {
     sleep_ms(2000);
     #endif
 
-    float freq = start_freq;
+    float tx_freq = start_freq; // this is the frequency to transmit
+    float rx_freq; // this is the frequency we are reading
 
     // Loop forever
     while (true) {
 
+        // update role
+        if(gpio_get(BUTTON_PIN)) {
+            // button is pressed, transmit
+
+            if (!transmitting) {
+                // we were not transmiting last time, so commence transmitting
+                printf("button is pressed, setting role to transmit\n");
+                radio.stopListening();
+
+                // disable speaker, reset frequency
+                pwm_set_enabled(slice_num, false);
+                tx_freq = start_freq;
+            }
+
+            transmitting = 1;
+        }
+        else {
+            // button is not pressed, listen
+
+            if (transmitting) {
+                // we were transmitting, so reset everything.
+                printf("button released, listening again.\n");
+                radio.startListening();
+            }
+
+            transmitting = 0;
+        }
+
         if (transmitting) {
-            // transmitting...
+            // we are transmitting
             unsigned long start_timer = time_us_32();                    // start the timer
-            bool report = radio.write(&freq, sizeof(float));      // transmit & save the report
+            bool report = radio.write(&tx_freq, sizeof(float));      // transmit & save the report
             unsigned long end_timer = time_us_32();                      // end the timer
 
-            if (report) {
-                printf("Transmission successful, time to transmit: %d us\n", end_timer - start_timer);
-            }
-            else {
-                printf("Transmission failed or timed out.\n");
-            }
-
-            //sleep_ms(500);
+            // here we are not checking the ack, so just increase the frequency.
+            tx_freq += 1;
 
         }
         else {
@@ -117,8 +140,8 @@ int main() {
             uint8_t pipe;
             if (radio.available(&pipe)) {
                 uint8_t bytes = radio.getPayloadSize();
-                radio.read(&freq, bytes);
-                printf("received %d bytes on pipe %d: %f\n", bytes, pipe, freq);
+                radio.read(&rx_freq, bytes);
+                printf("received %d bytes on pipe %d: %f\n", bytes, pipe, rx_freq);
 
                 gpio_put(LED_PIN, 1);
 
@@ -126,7 +149,7 @@ int main() {
                 uint16_t level;
                 float divider;
 
-                get_pwm_params(freq, 50, &top, &level, &divider);
+                get_pwm_params(rx_freq, 50, &top, &level, &divider);
                 printf("setting PWM params to TOP %d, DIVIDER %.2f, and LEVEL %d", top, divider, level);
 
                 pwm_set_wrap(slice_num, top);
@@ -138,31 +161,5 @@ int main() {
                 pwm_set_enabled(slice_num, false);
             }
         }
-
-        // change role?
-        if(gpio_get(BUTTON_PIN)) {
-            if (!transmitting) {
-                printf("button is pressed, setting role to transmit\n");
-                radio.stopListening();
-                pwm_set_enabled(slice_num, false);
-                freq = start_freq;
-            }
-            else {
-                freq += 1;
-            }
-
-            transmitting = 1;
-
-        }
-        else {
-            if (transmitting) {
-                printf("button released, listening again.\n");
-                radio.startListening();
-                freq = start_freq;
-            }
-            transmitting = 0;
-        }
-
     }
-
 }
