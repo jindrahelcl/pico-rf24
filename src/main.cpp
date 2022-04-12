@@ -126,9 +126,8 @@ int main() {
                 uint16_t level;
                 float divider;
 
-                printf("setting PWM params to TOP %d, DIVIDER %.2f, and LEVEL %d", top, divider, level);
-
                 get_pwm_params(freq, 50, &top, &level, &divider);
+                printf("setting PWM params to TOP %d, DIVIDER %.2f, and LEVEL %d", top, divider, level);
 
                 pwm_set_wrap(slice_num, top);
                 pwm_set_chan_level(slice_num, AUDIO_PIN, level);
@@ -136,6 +135,7 @@ int main() {
             }
             else {
                 gpio_put(LED_PIN, 0);
+                pwm_set_enabled(slice_num, false);
             }
         }
 
@@ -144,6 +144,7 @@ int main() {
             if (!transmitting) {
                 printf("button is pressed, setting role to transmit\n");
                 radio.stopListening();
+                pwm_set_enabled(slice_num, false);
                 freq = start_freq;
             }
             else {
@@ -158,8 +159,6 @@ int main() {
                 printf("button released, listening again.\n");
                 radio.startListening();
                 freq = start_freq;
-
-                pwm_set_enabled(slice_num, false);
             }
             transmitting = 0;
         }
