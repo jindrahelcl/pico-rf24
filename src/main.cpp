@@ -5,7 +5,7 @@
 RF24 radio(17, 14); // CE and CSN pins (respectively)
 uint8_t pipes[][6] = {"1Node", "2Node"};
 
-bool radioNumber = 1;  // 0 uses pipes[0] to transmit, 1 uses pipes[1] to transmit
+bool radioNumber = RADIO_NUMBER;  // 0 uses pipes[0] to transmit, 1 uses pipes[1] to transmit
 bool transmitting = false; // whether sending or receiving. false is receiving
 
 float payload = 3.0;
@@ -18,9 +18,11 @@ int main() {
     stdio_init_all();
 
     // wait for us to connect to the serial interface
+    #if INTERACTIVE
     while (!stdio_usb_connected()) {
         sleep_ms(100);
     }
+    #endif
 
     // initialize button and LED pins
     gpio_init(BUTTON_PIN);
@@ -36,8 +38,10 @@ int main() {
     }
 
     printf("Hello, this is vysilacka software.\n");
+
+    #if INTERACTIVE
     printf("Which radio is this? Enter 0 or 1. Default 0\n");
-    int c = getchar_timeout_us(10000000);
+    int c = getchar_timeout_us(20000000);
     printf("You said: %c\n", c);
     switch(c) {
         case '0':
@@ -55,6 +59,7 @@ int main() {
             radioNumber = 0;
             break;
     }
+    #endif
 
     printf("setting up radio and opening pipes.\n");
     radio.setPALevel(RF24_PA_MAX);
@@ -68,7 +73,10 @@ int main() {
     radio.startListening();
 
     printf("entering while loop in 2 seconds\n");
+
+    #if INTERACTIVE
     sleep_ms(2000);
+    #endif
 
     // Loop forever
     while (true) {

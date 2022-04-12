@@ -48,6 +48,8 @@ target_compile_definitions(${PROJECT_NAME}
     PUBLIC PICO_DEFAULT_SPI_SCK_PIN=6
     PUBLIC PICO_DEFAULT_SPI_TX_PIN=7
     PUBLIC PICO_DEFAULT_SPI_RX_PIN=4
+    PUBLIC RADIO_NUMBER=1
+    PUBLIC INTERACTIVE=false
 )
 
 # Enable usb output, disable uart output
