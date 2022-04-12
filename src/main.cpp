@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <RF24.h>
 #include "pico/stdlib.h"
+#include "hardware/clocks.h"
+#include "hardware/pwm.h"
 
 RF24 radio(17, 14); // CE and CSN pins (respectively)
 uint8_t pipes[][6] = {"1Node", "2Node"};
@@ -8,10 +10,18 @@ uint8_t pipes[][6] = {"1Node", "2Node"};
 bool radioNumber = RADIO_NUMBER;  // 0 uses pipes[0] to transmit, 1 uses pipes[1] to transmit
 bool transmitting = false; // whether sending or receiving. false is receiving
 
-float payload = 3.0;
+float start_freq = 100;
 
 const int BUTTON_PIN = 15;
 const int LED_PIN = 16;
+const int AUDIO_PIN = 10;
+
+void get_pwm_params(const uint32_t freq, const uint16_t duty, uint32_t* top, uint16_t* level, float* divider) {
+    uint32_t f_sys = clock_get_hz(clk_sys);
+    *divider = f_sys / 1000000UL;
+    *top = 1000000UL / freq - 1;
+    *level = (*top + 1) * duty / 100 - 1;
+}
 
 int main() {
     // Initialize chosen serial port
@@ -31,6 +41,9 @@ int main() {
 
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
+
+    gpio_set_function(AUDIO_PIN, GPIO_FUNC_PWM);
+    uint slice_num = pwm_gpio_to_slice_num(AUDIO_PIN);
 
     if (!radio.begin()) {
         printf("Radio hardware is not responding!\n");
@@ -63,7 +76,7 @@ int main() {
 
     printf("setting up radio and opening pipes.\n");
     radio.setPALevel(RF24_PA_MAX);
-    radio.setPayloadSize(sizeof(payload));
+    radio.setPayloadSize(sizeof(float));
     radio.setAutoAck(false);
 
     radio.openReadingPipe(1, pipes[!radioNumber]);
@@ -78,13 +91,15 @@ int main() {
     sleep_ms(2000);
     #endif
 
+    float freq = start_freq;
+
     // Loop forever
     while (true) {
 
         if (transmitting) {
             // transmitting...
             unsigned long start_timer = time_us_32();                    // start the timer
-            bool report = radio.write(&payload, sizeof(float));      // transmit & save the report
+            bool report = radio.write(&freq, sizeof(float));      // transmit & save the report
             unsigned long end_timer = time_us_32();                      // end the timer
 
             if (report) {
@@ -102,10 +117,22 @@ int main() {
             uint8_t pipe;
             if (radio.available(&pipe)) {
                 uint8_t bytes = radio.getPayloadSize();
-                radio.read(&payload, bytes);
-                printf("received %d bytes on pipe %d: %f\n", bytes, pipe, payload);
+                radio.read(&freq, bytes);
+                printf("received %d bytes on pipe %d: %f\n", bytes, pipe, freq);
 
                 gpio_put(LED_PIN, 1);
+
+                uint32_t top;
+                uint16_t level;
+                float divider;
+
+                printf("setting PWM params to TOP %d, DIVIDER %.2f, and LEVEL %d", top, divider, level);
+
+                get_pwm_params(freq, 50, &top, &level, &divider);
+
+                pwm_set_wrap(slice_num, top);
+                pwm_set_chan_level(slice_num, AUDIO_PIN, level);
+                pwm_set_enabled(slice_num, true);
             }
             else {
                 gpio_put(LED_PIN, 0);
@@ -117,13 +144,22 @@ int main() {
             if (!transmitting) {
                 printf("button is pressed, setting role to transmit\n");
                 radio.stopListening();
+                freq = start_freq;
             }
+            else {
+                freq += 1;
+            }
+
             transmitting = 1;
+
         }
         else {
             if (transmitting) {
                 printf("button released, listening again.\n");
                 radio.startListening();
+                freq = start_freq;
+
+                pwm_set_enabled(slice_num, false);
             }
             transmitting = 0;
         }
