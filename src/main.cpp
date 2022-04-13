@@ -16,9 +16,7 @@ const int BUTTON_PIN = 15;
 const int LED_PIN = 16;
 const int AUDIO_PIN = 10;
 
-void get_pwm_params(const uint32_t freq, const uint16_t duty, uint32_t* top, uint16_t* level, float* divider) {
-    uint32_t f_sys = clock_get_hz(clk_sys);
-    *divider = f_sys / 1000000UL;
+void get_pwm_params(const uint32_t freq, const uint16_t duty, uint32_t* top, uint16_t* level) {
     *top = 1000000UL / freq - 1;
     *level = (*top + 1) * duty / 100 - 1;
 }
@@ -44,6 +42,15 @@ int main() {
 
     gpio_set_function(AUDIO_PIN, GPIO_FUNC_PWM);
     uint slice_num = pwm_gpio_to_slice_num(AUDIO_PIN);
+    uint pwm_channel = pwm_gpio_to_channel(AUDIO_PIN);
+
+    pwm_config cfg = pwm_get_default_config();
+    float clock_divider = static_cast<float>(clock_get_hz(clk_sys)) / 1000000UL;
+
+    pwm_config_set_clkdiv(&cfg, clock_divider);
+    pwm_config_set_clkdiv_mode(&cfg, PWM_DIV_FREE_RUNNING);
+    pwm_config_set_phase_correct(&cfg, true);
+    pwm_init(slice_num, &cfg, false);
 
     if (!radio.begin()) {
         printf("Radio hardware is not responding!\n");
@@ -147,13 +154,11 @@ int main() {
 
                 uint32_t top;
                 uint16_t level;
-                float divider;
-
-                get_pwm_params(rx_freq, 50, &top, &level, &divider);
-                printf("setting PWM params to TOP %d, DIVIDER %.2f, and LEVEL %d", top, divider, level);
+                get_pwm_params(rx_freq, 50, &top, &level);
+                printf("setting PWM params to TOP %d, and LEVEL %d", top, level);
 
                 pwm_set_wrap(slice_num, top);
-                pwm_set_chan_level(slice_num, AUDIO_PIN, level);
+                pwm_set_chan_level(slice_num, pwm_channel, level);
                 pwm_set_enabled(slice_num, true);
             }
             else {
