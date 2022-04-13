@@ -20,14 +20,18 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
 )
 
-add_executable(test
+add_executable(test_usb
     src/test_usb.cpp
+)
+
+add_executable(test_pwm_speaker
+    src/test_pwm_speaker.cpp
 )
 
 # Create map/bin/hex/uf2 files
 pico_add_extra_outputs(${PROJECT_NAME})
-
-pico_add_extra_outputs(test)
+pico_add_extra_outputs(test_usb)
+pico_add_extra_outputs(test_pwm_speaker)
 
 # Link to pico_stdlib (gpio, time, etc. functions)
 target_link_libraries(${PROJECT_NAME}
@@ -39,9 +43,18 @@ target_link_libraries(${PROJECT_NAME}
     RF24
 )
 
-target_link_libraries(test
+target_link_libraries(test_usb
     pico_stdlib
     hardware_timer
+    pico_stdio_usb
+)
+
+
+target_link_libraries(test_pwm_speaker
+    pico_stdlib
+    hardware_timer
+    hardware_clocks
+    hardware_pwm
     pico_stdio_usb
 )
 
