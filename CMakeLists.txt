@@ -28,10 +28,17 @@ add_executable(test_pwm_speaker
     src/test_pwm_speaker.cpp
 )
 
+add_executable(hello_world_microphone
+    src/hello_world_microphone.c src/microphone.c
+    src/microphone.h
+)
+
+
 # Create map/bin/hex/uf2 files
 pico_add_extra_outputs(${PROJECT_NAME})
 pico_add_extra_outputs(test_usb)
 pico_add_extra_outputs(test_pwm_speaker)
+pico_add_extra_outputs(hello_world_microphone)
 
 # Link to pico_stdlib (gpio, time, etc. functions)
 target_link_libraries(${PROJECT_NAME}
@@ -49,6 +56,13 @@ target_link_libraries(test_usb
     pico_stdio_usb
 )
 
+target_link_libraries(hello_world_microphone
+    pico_stdlib
+    hardware_timer
+    pico_stdio_usb
+    hardware_adc
+    hardware_dma
+)
 
 target_link_libraries(test_pwm_speaker
     pico_stdlib
@@ -63,7 +77,7 @@ target_compile_definitions(${PROJECT_NAME}
     PUBLIC PICO_DEFAULT_SPI_SCK_PIN=6
     PUBLIC PICO_DEFAULT_SPI_TX_PIN=7
     PUBLIC PICO_DEFAULT_SPI_RX_PIN=4
-    PUBLIC RADIO_NUMBER=1
+    PUBLIC RADIO_NUMBER=0
     PUBLIC INTERACTIVE=false
 )
 
