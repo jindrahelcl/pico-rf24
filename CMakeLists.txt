@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 
 # Include build functions from Pico SDK
 include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
+include($ENV{PICO_EXTRAS_PATH}/external/pico_extras_import.cmake)
 
 # Include the RF24 library
 include(lib/RF24/CMakeLists.txt)
@@ -28,6 +29,10 @@ add_executable(test_pwm_speaker
     src/test_pwm_speaker.cpp
 )
 
+add_executable(sine_wave
+    src/sine_wave.c
+)
+
 add_executable(hello_world_microphone
     src/hello_world_microphone.c src/microphone.c
     src/microphone.h
@@ -39,6 +44,7 @@ pico_add_extra_outputs(${PROJECT_NAME})
 pico_add_extra_outputs(test_usb)
 pico_add_extra_outputs(test_pwm_speaker)
 pico_add_extra_outputs(hello_world_microphone)
+pico_add_extra_outputs(sine_wave)
 
 # Link to pico_stdlib (gpio, time, etc. functions)
 target_link_libraries(${PROJECT_NAME}
@@ -62,6 +68,16 @@ target_link_libraries(hello_world_microphone
     pico_stdio_usb
     hardware_adc
     hardware_dma
+)
+
+
+target_link_libraries(sine_wave
+    pico_stdlib
+    hardware_timer
+    pico_stdio_usb
+    hardware_adc
+    hardware_dma
+    pico_audio_pwm
 )
 
 target_link_libraries(test_pwm_speaker
