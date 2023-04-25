@@ -2,7 +2,7 @@
 
 import serial
 import sys
-
+import time
 
 
 def serial_getter():
@@ -12,11 +12,14 @@ def serial_getter():
     for i in range(5):
         line = ser.readline()
         try:
-            line = float(line)
+            line = int(line)
         except ValueError:
             continue
         break
     yield line
+
+def fast_getter():
+    yield ser.readline()
 
 if len(sys.argv) < 2:
     raise Exception("Usage: sniff_usb.py PORT (such as /dev/ttyS5)")
@@ -24,6 +27,20 @@ if len(sys.argv) < 2:
 ser = serial.Serial(sys.argv[1], 115200, timeout=1)
 
 
+start = time.time()
+i = 0
+
 while True:
-    for line in serial_getter():
-        print(line)
+
+    try:
+        line = int(ser.readline())
+    except ValueError:
+        continue
+
+    i += 1
+    print(line)
+
+    if i == 8000:
+        end = time.time()
+        print("time to get 8000:", end - start, file=sys.stderr)
+        break

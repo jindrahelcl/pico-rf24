@@ -10,11 +10,17 @@ if len(sys.argv) < 2:
 with open(sys.argv[1]) as f:
     data = [float(line.strip()) for line in f]
 
-samplerate = 4000
+samplerate = 1600
 sound = np.array(data)
-sound -= np.mean(sound)
-sound /=  np.max(np.abs(sound))
+sound -= np.min(sound)
+sound /= np.max(sound)
+sound *= 2
+sound -= 1
+#sound -= np.mean(sound)
+#sound /=  np.max(np.abs(sound))
 
+print(np.max(sound))
+print(np.min(sound))
 print(sound)
 
 # Play the data as sound
