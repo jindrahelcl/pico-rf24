@@ -4,6 +4,8 @@
 #include "hardware/clocks.h"
 #include "hardware/pwm.h"
 
+#include "button.h"
+
 RF24 radio(17, 14); // CE and CSN pins (respectively)
 uint8_t pipes[][6] = {"1Node", "2Node"};
 
@@ -11,6 +13,9 @@ bool radioNumber = RADIO_NUMBER;  // 0 uses pipes[0] to transmit, 1 uses pipes[1
 bool transmitting = false; // whether sending or receiving. false is receiving
 
 float start_freq = 100;
+
+const int RADIO_CE_PIN = 17;
+const int RADIO_CSN_PIN = 14;
 
 const int BUTTON_PIN = 15;
 const int LED_PIN = 16;
@@ -32,13 +37,14 @@ int main() {
     }
     #endif
 
-    // initialize button and LED pins
-    gpio_init(BUTTON_PIN);
-    gpio_set_dir(BUTTON_PIN, GPIO_IN);
-    gpio_pull_down(BUTTON_PIN); // ensure it is not floating when button not pressed
 
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
+    // initialize button
+    button_t button;
+    button_init(&button, BUTTON_PIN);
+
+    // init LED
+    led_t led;
+    led_init(&led);
 
     gpio_set_function(AUDIO_PIN, GPIO_FUNC_PWM);
     uint slice_num = pwm_gpio_to_slice_num(AUDIO_PIN);
@@ -52,10 +58,6 @@ int main() {
     pwm_config_set_phase_correct(&cfg, true);
     pwm_init(slice_num, &cfg, false);
 
-    if (!radio.begin()) {
-        printf("Radio hardware is not responding!\n");
-        return 1;
-    }
 
     printf("Hello, this is vysilacka software.\n");
 
@@ -81,16 +83,19 @@ int main() {
     }
     #endif
 
-    printf("setting up radio and opening pipes.\n");
-    radio.setPALevel(RF24_PA_MAX);
-    radio.setPayloadSize(sizeof(float));
-    radio.setAutoAck(false);
+    radio_t r;
 
-    radio.openReadingPipe(1, pipes[!radioNumber]);
-    radio.openWritingPipe(pipes[radioNumber]);
+    printf("setting up radio and opening pipes.\n");
+    radio_init(&r, RADIO_CE_PIN, RADIO_CSN_PIN, pipes[!radioNumber], pipes[radioNumber]);
+
+    if (!radio_open(&r)) {
+        printf("Radio hardware is not responding!\n");
+        return 1;
+    }
+
 
     printf("starting listening\n");
-    radio.startListening();
+    radio.backend->startListening();
 
     printf("entering while loop in 2 seconds\n");
 
@@ -98,6 +103,9 @@ int main() {
     sleep_ms(2000);
     #endif
 
+    // NOTE these floats are *not* the frequency used by the RF chip. it's just
+    // the numeric data being transmitted, which are *interpreted* as frequency
+    // by the receiver.
     float tx_freq = start_freq; // this is the frequency to transmit
     float rx_freq; // this is the frequency we are reading
 
@@ -150,7 +158,7 @@ int main() {
                 radio.read(&rx_freq, bytes);
                 printf("received %d bytes on pipe %d: %f\n", bytes, pipe, rx_freq);
 
-                gpio_put(LED_PIN, 1);
+                led_on(&led);
 
                 uint32_t top;
                 uint16_t level;
@@ -162,7 +170,8 @@ int main() {
                 pwm_set_enabled(slice_num, true);
             }
             else {
-                gpio_put(LED_PIN, 0);
+                led_off(&led);
+
                 pwm_set_enabled(slice_num, false);
             }
         }

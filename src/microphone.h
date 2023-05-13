@@ -10,14 +10,14 @@
 
 typedef void (*analog_samples_ready_handler_t)(void);
 
-struct analog_microphone_config {
+typedef struct {
     uint gpio;
     float bias_voltage;
     uint sample_rate;
     uint sample_buffer_size;
-};
+} analog_microphone_config;
 
-int analog_microphone_init(const struct analog_microphone_config* config);
+int analog_microphone_init(analog_microphone_config* config);
 void analog_microphone_deinit();
 
 int analog_microphone_start();

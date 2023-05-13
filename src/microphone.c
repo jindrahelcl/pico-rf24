@@ -19,7 +19,7 @@
 #define ANALOG_RAW_BUFFER_COUNT 4
 
 static struct {
-  struct analog_microphone_config config;
+  analog_microphone_config config;
   int dma_channel;
   uint16_t* raw_buffer[ANALOG_RAW_BUFFER_COUNT];
   volatile int raw_buffer_write_index;  // these two vars can be changed
@@ -32,7 +32,7 @@ static struct {
 
 static void analog_dma_handler();
 
-int analog_microphone_init(const struct analog_microphone_config* config) {
+int analog_microphone_init(analog_microphone_config* config) {
   // zero out the memory allocated for analog mic struct
   memset(&analog_mic, 0x00, sizeof(analog_mic));
 

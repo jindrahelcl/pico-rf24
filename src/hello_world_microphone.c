@@ -17,7 +17,7 @@
 #define SAMPLE_BUFSIZE 512
 
 // configuration
-const struct analog_microphone_config config = {
+const analog_microphone_config config = {
     // GPIO to use for input, must be ADC compatible (GPIO 26 - 28)
     .gpio = 26,
 
@@ -84,18 +84,17 @@ int main( void )
     }
 
     while (1) {
-      tight_loop_contents();
-        // wait for new samples
-        while (samples_read == 0) { tight_loop_contents(); }
+      // wait for new samples
+      while (samples_read == 0) { tight_loop_contents(); }
 
-        // store and clear the samples read from the callback
-        int sample_count = samples_read;
-        samples_read = 0;
+      // store and clear the samples read from the callback
+      int sample_count = samples_read;
+      samples_read = 0;
 
-        // loop through any new collected samples
-        for (int i = 0; i < sample_count; i++) {
-            printf("%i\n", sample_buffer[i]);
-        }
+      // loop through any new collected samples
+      for (int i = 0; i < sample_count; i++) {
+        printf("%i\n", sample_buffer[i]);
+      }
     }
 
     return 0;
